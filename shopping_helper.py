@@ -29,18 +29,28 @@ Usage: shopping_helper.py (shopping_list.json) (inventories.json)
 import argparse
 import copy
 import json
+import ast
 
-store_pairs = [][] #map which lists keys as the number of vertices and pairs of lists 
 
+node_map = {}
 # to help you get started, we have provided some boiler plate code
 def satisfy_shopping_list(shopping_list_json, inventory_json):
     # find out minimum combination of stores that would satisfy shopping list
-    inventory_list = inventory_json["stores"]
-    for stores in inventory_list: #every store is treated as a node here
-        while isShoppingListSatisfied(shopping_list_json) is False: # check here whether the 
+    stores = inventory_json["stores"]
+    stores_list = []
+    #initialize node map
+    for store in stores:
+        stores_list.append(store['name'])
+        #visited_nodes[store["name"]] = False
+    for store in stores_list:
+        node_set = set(stores_list)
+        node_map[store] = set(node_set - set([store]))
+    print node_map
+    # for stores in inventory_list: #every store is treated as a node here
+    #     while isShoppingListSatisfied(shopping_list_json) is False: # check here whether the 
 
     # if shopping list is impossible to satisfy
-    shopping_list_satisfiable = True
+    shopping_list_satisfiable = False
     if shopping_list_satisfiable:
         # print out number of stores and corresponding combinations
         # num_stores = 0
@@ -49,7 +59,7 @@ def satisfy_shopping_list(shopping_list_json, inventory_json):
         # print_store_list(store_combination)
         pass
     else:
-         print "No combination of given stores can satisfy this shopping list :("
+        print "No combination of given stores can satisfy this shopping list :("
         pass
 
 def isShoppingListSatisfied(shopping_list_json):
@@ -63,7 +73,8 @@ def decrementShoppingList(key, shopping_list_json, inventory):
     if inventory > quantity :
         shopping_list_json[key] = 0
     else:
-        shopping_list_json[key] = quantity - inventory;
+        shopping_list_json[key] = quantity - inventory
+
 
 
 def print_store_combination(store_combination):
@@ -78,12 +89,34 @@ def print_store_combination(store_combination):
     store_combination_copy.sort()
     print ', '.join(store_combination_copy)
 
+def json_load_byteified(file_handle):
+    return _byteify(
+        json.load(file_handle, object_hook=_byteify),
+        ignore_dicts=True
+    )
+
+def _byteify(data, ignore_dicts = False):
+    # if this is a unicode string, return its string representation
+    if isinstance(data, unicode):
+        return data.encode('utf-8')
+    # if this is a list of values, return list of byteified values
+    if isinstance(data, list):
+        return [ _byteify(item, ignore_dicts=True) for item in data ]
+    # if this is a dictionary, return dictionary of byteified keys and values
+    # but only if we haven't already byteified it
+    if isinstance(data, dict) and not ignore_dicts:
+        return {
+            _byteify(key, ignore_dicts=True): _byteify(value, ignore_dicts=True)
+            for key, value in data.iteritems()
+        }
+    # if it's anything else, return it in its original form
+    return data
 
 def main():
     args = parse_args()
     with open(args.shopping_list_json_path) as shopping_list_json_file, open(args.inventory_json_path) as inventory_json_file:
-        shopping_list_json = json.load(shopping_list_json_file)
-        inventory_json = json.load(inventory_json_file)
+        shopping_list_json = json_load_byteified(shopping_list_json_file)
+        inventory_json = json_load_byteified(inventory_json_file)
         satisfy_shopping_list(shopping_list_json, inventory_json)
 
 
@@ -95,6 +128,7 @@ def parse_args():
 
     args = p.parse_args()
     return args
+
 
 if __name__ == '__main__':
     main()
