@@ -29,9 +29,9 @@ Usage: shopping_helper.py (shopping_list.json) (inventories.json)
 import argparse
 import copy
 import json
-import ast
 
 
+minimum_number_to_visit = list()
 node_map = {}
 # to help you get started, we have provided some boiler plate code
 def satisfy_shopping_list(shopping_list_json, inventory_json):
@@ -41,39 +41,56 @@ def satisfy_shopping_list(shopping_list_json, inventory_json):
     #initialize node map
     for store in stores:
         stores_list.append(store['name'])
-        #visited_nodes[store["name"]] = False
     for store in stores_list:
         node_set = set(stores_list)
         node_map[store] = set(node_set - set([store]))
-    print node_map
-    # for stores in inventory_list: #every store is treated as a node here
-    #     while isShoppingListSatisfied(shopping_list_json) is False: # check here whether the 
-
+    
+    for node in node_map: #fix this
+        visited_nodes = []
+        list_of_shops =  [node] +  list(node_map[node])
+        shopping_list = copy.deepcopy(shopping_list_json)
+        for key in list_of_shops:
+            for store in stores:
+                if store['name'] is key:
+                    satisfied = decrementShoppingList(store['inventory'], shopping_list)
+                    if satisfied :
+                        visited_nodes.append(key)
+        compare_distance(visited_nodes)
     # if shopping list is impossible to satisfy
-    shopping_list_satisfiable = False
+    shopping_list_satisfiable = len(minimum_number_to_visit) > 0
     if shopping_list_satisfiable:
         # print out number of stores and corresponding combinations
-        # num_stores = 0
-        # print "The shopping list can be satisfied by visiting {} store(s):".format(num_stores)
-        # for each valid store_combination:
-        # print_store_list(store_combination)
+        num_stores = len(minimum_number_to_visit) 
+        print "The shopping list can be satisfied by visiting {} store(s):".format(num_stores)
+        print_store_combination(minimum_number_to_visit)
         pass
     else:
         print "No combination of given stores can satisfy this shopping list :("
         pass
 
+def compare_distance(satisfiable_list):
+    global minimum_number_to_visit
+    if not minimum_number_to_visit:
+        minimum_number_to_visit = copy.deepcopy(satisfiable_list)
+        return
+    if len(satisfiable_list) < len(minimum_number_to_visit):
+        minimum_number_to_visit = copy.deepcopy(satisfiable_list)
+    
 def isShoppingListSatisfied(shopping_list_json):
     for key in shopping_list_json:
         if shopping_list_json[key] != 0:
             return False
     return True
 
-def decrementShoppingList(key, shopping_list_json, inventory):
-    quantity = shopping_list_json[key]
-    if inventory > quantity :
-        shopping_list_json[key] = 0
-    else:
-        shopping_list_json[key] = quantity - inventory
+def decrementShoppingList(inventory, shopping_list):
+    for item in shopping_list:
+        if item in inventory and shopping_list[item] > 0:
+            if inventory[item] >= shopping_list[item]:
+                shopping_list[item] = 0
+            else:
+                shopping_list[item] = shopping_list[item] - inventory[item]
+            return True
+    return False
 
 
 
