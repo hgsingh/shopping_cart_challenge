@@ -32,41 +32,53 @@ import json
 
 
 minimum_number_to_visit = list()
-node_map = {}
 # to help you get started, we have provided some boiler plate code
 def satisfy_shopping_list(shopping_list_json, inventory_json):
     # find out minimum combination of stores that would satisfy shopping list
-    stores = inventory_json["stores"]
-    stores_list = []
+    stores = inventory_json['stores']
+    stores_with_scores = {}
     #initialize node map
     for store in stores:
-        stores_list.append(store['name'])
-    for store in stores_list:
-        node_set = set(stores_list)
-        node_map[store] = set(node_set - set([store]))
-    
-    for node in node_map: #fix this
-        visited_nodes = []
-        list_of_shops =  [node] +  list(node_map[node])
-        shopping_list = copy.deepcopy(shopping_list_json)
-        for key in list_of_shops:
-            for store in stores:
-                if store['name'] is key:
-                    satisfied = decrementShoppingList(store['inventory'], shopping_list)
-                    if satisfied :
-                        visited_nodes.append(key)
-        compare_distance(visited_nodes)
-    # if shopping list is impossible to satisfy
-    shopping_list_satisfiable = len(minimum_number_to_visit) > 0
+        current_score = find_score(store['inventory'], shopping_list_json)
+        if current_score > 0:
+            stores_with_scores[store['name']] = current_score
+    combo = find_store_combos(stores_with_scores, stores, shopping_list_json)
+    shopping_list_satisfiable = len(combo) > 0
     if shopping_list_satisfiable:
         # print out number of stores and corresponding combinations
-        num_stores = len(minimum_number_to_visit) 
+        num_stores = len(combo) 
         print "The shopping list can be satisfied by visiting {} store(s):".format(num_stores)
-        print_store_combination(minimum_number_to_visit)
+        print_store_combination(combo)
         pass
     else:
         print "No combination of given stores can satisfy this shopping list :("
         pass
+def find_store_combos(scores, stores, shopping_list):
+    combo = []
+    print shopping_list
+    for key in sorted(scores.items(), key=lambda x: x[1], reverse=True): #start with the highest scores first
+        for store in stores:
+            if is_shopping_list_satisfied(shopping_list):
+                break
+            elif key[0] == store['name']:
+                print shopping_list
+                if decrement_shopping_list(store['inventory'], shopping_list):
+                    combo.append(key[0])
+        if is_shopping_list_satisfied(shopping_list): break
+    print combo
+    print shopping_list
+    return combo
+
+def find_score(store, shopping_list):
+    score = 0
+    for item in shopping_list:
+        for inventory in store:
+            if item == inventory:
+                score = score  + 1
+                if store[inventory] >= shopping_list[item]:
+                    score = score + 10
+    return score
+
 
 def compare_distance(satisfiable_list):
     global minimum_number_to_visit
@@ -76,21 +88,20 @@ def compare_distance(satisfiable_list):
     if len(satisfiable_list) < len(minimum_number_to_visit):
         minimum_number_to_visit = copy.deepcopy(satisfiable_list)
     
-def isShoppingListSatisfied(shopping_list_json):
+def is_shopping_list_satisfied(shopping_list_json):
     for key in shopping_list_json:
         if shopping_list_json[key] != 0:
             return False
     return True
 
-def decrementShoppingList(inventory, shopping_list):
+def decrement_shopping_list(inventory, shopping_list):
+    item_found = False
     for item in shopping_list:
         if item in inventory and shopping_list[item] > 0:
             if inventory[item] >= shopping_list[item]:
+                item_found = True
                 shopping_list[item] = 0
-            else:
-                shopping_list[item] = shopping_list[item] - inventory[item]
-            return True
-    return False
+    return item_found
 
 
 
