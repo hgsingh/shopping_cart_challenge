@@ -62,7 +62,7 @@ def find_store_combos(scores, stores, shopping_list):
                 break
             elif key[0] == store['name']:
                 print shopping_list
-                if decrement_shopping_list(store['inventory'], shopping_list):
+                if decrement_shopping_list(store['inventory'], shopping_list) == 1:
                     combo.append(key[0])
         if is_shopping_list_satisfied(shopping_list): break
     print combo
@@ -94,14 +94,18 @@ def is_shopping_list_satisfied(shopping_list_json):
             return False
     return True
 
+
 def decrement_shopping_list(inventory, shopping_list):
-    item_found = False
+    score = -1
     for item in shopping_list:
         if item in inventory and shopping_list[item] > 0:
             if inventory[item] >= shopping_list[item]:
-                item_found = True
+                score = 1
                 shopping_list[item] = 0
-    return item_found
+            elif inventory[item] < shopping_list[item]:
+                score = 0
+                shopping_list[item] = shopping_list[item] = inventory[item]
+    return score
 
 
 
